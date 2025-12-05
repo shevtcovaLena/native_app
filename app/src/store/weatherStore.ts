@@ -23,6 +23,26 @@ interface WeatherStoreActions {
 
 type WeatherStore = WeatherStoreState & WeatherStoreActions;
 
+const orderCities = (cities: City[]): City[] => {
+  const seen = new Set<string>();
+  const ordered: City[] = [];
+
+  const currentLocation = cities.find((c) => c.id === "current-location");
+  if (currentLocation) {
+    ordered.push(currentLocation);
+    seen.add(currentLocation.id);
+  }
+
+  for (const city of cities) {
+    if (!seen.has(city.id)) {
+      ordered.push(city);
+      seen.add(city.id);
+    }
+  }
+
+  return ordered;
+};
+
 export const useWeatherStore = create<WeatherStore>((set, get) => ({
   cities: [],
   currentCity: null,
@@ -39,7 +59,7 @@ export const useWeatherStore = create<WeatherStore>((set, get) => ({
       return;
     }
 
-    const newCities = [...state.cities, city];
+    const newCities = orderCities([...state.cities, city]);
     set({ cities: newCities });
     // Сохраняем в хранилище (асинхронно)
     await appStorage.saveCities(newCities);
@@ -47,7 +67,7 @@ export const useWeatherStore = create<WeatherStore>((set, get) => ({
 
   removeCity: async (cityId: string) => {
     const state = get();
-    const newCities = state.cities.filter((city) => city.id !== cityId);
+    const newCities = orderCities(state.cities.filter((city) => city.id !== cityId));
     set({ cities: newCities });
     // Сохраняем в хранилище (асинхронно)
     await appStorage.saveCities(newCities);
@@ -88,7 +108,7 @@ export const useWeatherStore = create<WeatherStore>((set, get) => ({
     const savedCurrentCity = await appStorage.loadCurrentCity();
 
     set({
-      cities: savedCities,
+      cities: orderCities(savedCities),
       currentCity: savedCurrentCity,
       initialized: true,
     });
