@@ -1,0 +1,743 @@
+# React Native Weather App - Cursor Rules
+
+## Project Overview
+React Native weather application inspired by iOS Weather app. Built with Expo, TypeScript, and modern React Native stack.
+
+**Target Platform:** iOS & Android  
+**Development Mode:** Expo managed workflow  
+**State Management:** Zustand  
+**Navigation:** React Navigation v6  
+**API:** Open-Meteo API
+
+---
+
+## Tech Stack
+
+### Core
+- **React Native** 0.76+ (via Expo SDK 52+)
+- **TypeScript** 5.x - strict mode enabled
+- **Expo** - managed workflow
+
+### Key Libraries
+- `@react-navigation/native` - navigation
+- `@react-navigation/stack` - stack navigation
+- `react-native-gesture-handler` - swipe gestures
+- `react-native-reanimated` - animations
+- `zustand` - state management
+- `@react-native-async-storage/async-storage` - local storage
+- `expo-location` - geolocation
+- `expo-notifications` - push notifications
+- `axios` - HTTP client
+
+---
+
+## Code Style & Conventions
+
+### TypeScript
+- Use strict TypeScript with no implicit any
+- Define interfaces for all API responses
+- Use type inference where possible, explicit types for function params/returns
+- Prefer `interface` over `type` for object shapes
+- Use `enum` for weather conditions
+
+// ✅ Good
+interface WeatherData {
+temp: number;
+condition: WeatherCondition;
+city: string;
+}
+
+// ❌ Avoid
+const weatherData: any = fetchWeather();
+
+
+
+### Component Structure
+- **Functional components only** with hooks
+- Use `React.FC` or explicit return types
+- Extract complex logic into custom hooks
+- Keep components under 200 lines (split if larger)
+
+// ✅ Preferred structure
+interface WeatherCardProps {
+temperature: number;
+condition: string;
+}
+
+export const WeatherCard: React.FC<WeatherCardProps> = ({
+temperature,
+condition
+}) => {
+// Component logic
+return <View>...</View>;
+};
+
+
+
+### File Naming
+- **Components:** PascalCase (`WeatherCard.tsx`)
+- **Hooks:** camelCase with `use` prefix (`useWeather.ts`)
+- **Utils/Services:** camelCase (`weatherAPI.ts`)
+- **Types:** PascalCase (`WeatherTypes.ts`)
+- **Screens:** PascalCase with `Screen` suffix (`HomeScreen.tsx`)
+
+### Import Order
+// 1. React/React Native
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+
+// 2. Third-party libraries
+import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+
+// 3. Local imports - absolute paths
+import { WeatherCard } from '@/components/WeatherCard';
+import { useWeatherStore } from '@/store/weatherStore';
+import { WeatherData } from '@/types/weather';
+
+// 4. Assets
+import CloudIcon from '@/assets/icons/cloud.svg';
+
+
+
+---
+
+## Project Structure
+
+src/
+├── screens/ # Screen components
+│ ├── HomeScreen.tsx
+│ ├── CityListScreen.tsx
+│ ├── AddCityScreen.tsx
+│ └── DetailScreen.tsx
+├── components/ # Reusable components
+│ ├── ui/ # Generic UI components
+│ │ ├── Button.tsx
+│ │ └── Card.tsx
+│ ├── weather/ # Weather-specific components
+│ │ ├── WeatherCard.tsx
+│ │ ├── HourlyForecast.tsx
+│ │ └── DailyForecast.tsx
+│ └── list/ # List-related components
+│ └── SwipeableCityItem.tsx
+├── navigation/ # Navigation configuration
+│ └── AppNavigator.tsx
+├── services/ # API and external services
+│ ├── weatherAPI.ts
+│ └── geolocation.ts
+├── store/ # Zustand stores
+│ └── weatherStore.ts
+├── hooks/ # Custom hooks
+│ ├── useWeather.ts
+│ └── useGeolocation.ts
+├── utils/ # Helper functions
+│ ├── formatters.ts
+│ └── constants.ts
+├── types/ # TypeScript types/interfaces
+│ ├── weather.ts
+│ └── navigation.ts
+└── assets/ # Images, fonts, icons
+├── icons/
+└── images/
+
+
+
+---
+
+## State Management (Zustand)
+
+### Store Structure
+interface WeatherStore {
+// State
+cities: City[];
+currentWeather: WeatherData | null;
+loading: boolean;
+
+// Actions
+addCity: (city: City) => void;
+removeCity: (cityId: string) => void;
+fetchWeather: (cityId: string) => Promise<void>;
+}
+
+
+
+### Usage Pattern
+// ✅ Use selectors to prevent unnecessary re-renders
+const cities = useWeatherStore((state) => state.cities);
+const addCity = useWeatherStore((state) => state.addCity);
+
+// ❌ Avoid selecting entire store
+const store = useWeatherStore();
+
+
+
+---
+
+## Styling
+
+### Approach
+- Use **StyleSheet.create()** for all styles
+- Create reusable theme constants (`theme.ts`)
+- Responsive design with percentage widths or flexbox
+- Dark mode support via theme
+
+// theme.ts
+export const theme = {
+colors: {
+primary: '#007AFF',
+background: '#FFFFFF',
+text: '#000000',
+},
+spacing: {
+xs: 4,
+sm: 8,
+md: 16,
+lg: 24,
+},
+typography: {
+h1: { fontSize: 32, fontWeight: '700' },
+body: { fontSize: 16, fontWeight: '400' },
+},
+};
+
+// Component usage
+const styles = StyleSheet.create({
+container: {
+padding: theme.spacing.md,
+backgroundColor: theme.colors.background,
+},
+});
+
+
+
+---
+
+## API Integration
+
+### Open-Meteo API
+**Base URL:** `https://api.open-meteo.com/v1/`
+
+**Key Features:**
+- No API key required
+- No rate limits for non-commercial use
+- Open-source weather data from national weather services
+- High accuracy forecasts
+
+**Main Endpoints:**
+
+#### 1. Weather Forecast
+GET /forecast
+
+
+
+**Parameters:**
+- `latitude` (required) - Geographic coordinate
+- `longitude` (required) - Geographic coordinate
+- `current` - Current weather variables (comma-separated)
+  - Example: `temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m`
+- `hourly` - Hourly forecast variables
+  - Example: `temperature_2m,precipitation_probability,weather_code`
+- `daily` - Daily forecast variables
+  - Example: `temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code`
+- `timezone` - Timezone (default: GMT)
+  - Example: `Europe/Moscow`
+- `forecast_days` - Number of forecast days (1-16, default: 7)
+
+**Example Request:**
+GET https://api.open-meteo.com/v1/forecast?latitude=55.75&longitude=37.62&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe/Moscow&forecast_days=7
+
+
+
+**Response Example:**
+{
+"latitude": 55.75,
+"longitude": 37.62,
+"timezone": "Europe/Moscow",
+"current": {
+"time": "2025-12-03T17:00",
+"temperature_2m": -5.2,
+"relative_humidity_2m": 85,
+"weather_code": 3,
+"wind_speed_10m": 12.5
+},
+"hourly": {
+"time": ["2025-12-03T00:00", "2025-12-03T01:00", ...],
+"temperature_2m": [-6.1, -5.8, ...],
+"precipitation_probability": [20, 25, ...]
+},
+"daily": {
+"time": ["2025-12-03", "2025-12-04", ...],
+"temperature_2m_max": [-2.5, -1.3, ...],
+"temperature_2m_min": [-7.2, -6.5, ...],
+"precipitation_sum": [0.5, 2.3, ...]
+}
+}
+
+
+
+#### 2. Geocoding (City Search)
+GET https://geocoding-api.open-meteo.com/v1/search
+
+
+
+**Parameters:**
+- `name` (required) - City name to search
+- `count` - Number of results (default: 10)
+- `language` - Response language (default: en)
+  - Supported: en, ru, de, fr, es, it, pt, pl, nl, tr, zh, ja, ar
+
+**Example Request:**
+GET https://geocoding-api.open-meteo.com/v1/search?name=Moscow&count=5&language=ru
+
+
+
+**Response Example:**
+{
+"results": [
+{
+"id": 524901,
+"name": "Москва",
+"latitude": 55.75222,
+"longitude": 37.61556,
+"country": "Russia",
+"country_code": "RU",
+"admin1": "Москва",
+"timezone": "Europe/Moscow"
+}
+]
+}
+
+
+
+#### 3. Weather Code Mapping
+
+Open-Meteo uses WMO Weather Codes:
+
+| Code | Description (RU) | Description (EN) |
+|------|------------------|------------------|
+| 0 | Ясно | Clear sky |
+| 1-3 | Переменная облачность | Partly cloudy |
+| 45, 48 | Туман | Fog |
+| 51-55 | Морось | Drizzle |
+| 61-65 | Дождь | Rain |
+| 71-77 | Снег | Snow |
+| 80-82 | Ливень | Rain showers |
+| 95-99 | Гроза | Thunderstorm |
+
+**Full documentation:** https://open-meteo.com/en/docs/wmo
+
+---
+
+### Error Handling
+
+try {
+const response = await weatherAPI.getWeatherForecast(latitude, longitude);
+return response.data;
+} catch (error) {
+if (axios.isAxiosError(error)) {
+const status = error.response?.status;
+
+
+// Open-Meteo specific error handling
+if (status === 400) {
+  console.error('Invalid coordinates or parameters:', error.response?.data);
+  throw new Error('Неверные координаты или параметры запроса');
+}
+
+if (status === 429) {
+  console.error('Rate limit exceeded');
+  throw new Error('Превышен лимит запросов. Попробуйте позже.');
+}
+
+console.error('API Error:', error.response?.data);
+throw new Error(error.response?.data?.reason || 'Не удалось загрузить данные о погоде');
+}
+
+// Network or other errors
+if (error instanceof Error) {
+console.error('Network error:', error.message);
+throw new Error('Ошибка сети. Проверьте подключение к интернету.');
+}
+
+throw error;
+}
+
+
+
+### Caching Strategy
+
+Open-Meteo updates weather data hourly. Implement caching to reduce API calls:
+
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+
+interface CachedWeather {
+data: WeatherData;
+timestamp: number;
+}
+
+const weatherCache = new Map<string, CachedWeather>();
+
+const getCachedOrFetch = async (lat: number, lon: number) => {
+const cacheKey = ${lat},${lon};
+const cached = weatherCache.get(cacheKey);
+
+if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+return cached.data;
+}
+
+const data = await fetchWeather(lat, lon);
+weatherCache.set(cacheKey, { data, timestamp: Date.now() });
+
+return data;
+};
+
+
+
+---
+
+### Service Implementation Example
+
+// src/services/weatherAPI.ts
+import axios from 'axios';
+
+const BASE_URL = 'https://api.open-meteo.com/v1';
+const GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1';
+
+export const weatherAPI = {
+async getWeatherForecast(latitude: number, longitude: number) {
+const params = {
+latitude,
+longitude,
+current: 'temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m',
+hourly: 'temperature_2m,precipitation_probability,weather_code',
+daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code',
+timezone: 'auto',
+forecast_days: 7,
+};
+
+
+return axios.get(`${BASE_URL}/forecast`, { params });
+},
+
+async searchCity(query: string, language: string = 'ru') {
+const params = {
+name: query,
+count: 10,
+language,
+};
+
+
+return axios.get(`${GEOCODING_URL}/search`, { params });
+},
+};
+
+
+undefined
+
+
+---
+
+## Native Features
+
+### Geolocation
+import * as Location from 'expo-location';
+
+const useGeolocation = () => {
+const [location, setLocation] = useState<Location.LocationObject | null>(null);
+
+useEffect(() => {
+(async () => {
+const { status } = await Location.requestForegroundPermissionsAsync();
+if (status === 'granted') {
+const loc = await Location.getCurrentPositionAsync({});
+setLocation(loc);
+}
+})();
+}, []);
+
+return location;
+};
+
+
+
+### Notifications
+import * as Notifications from 'expo-notifications';
+
+// Configure notification handler
+Notifications.setNotificationHandler({
+handleNotification: async () => ({
+shouldShowAlert: true,
+shouldPlaySound: true,
+shouldSetBadge: false,
+}),
+});
+
+// Schedule notification
+await Notifications.scheduleNotificationAsync({
+content: {
+title: 'Дождь через час',
+body: 'Не забудь зонт!',
+},
+trigger: { seconds: 3600 },
+});
+
+
+
+### Local Storage (AsyncStorage)
+
+**Why AsyncStorage?**
+
+AsyncStorage is the standard storage solution for React Native:
+- **Cross-platform:** Works reliably on iOS, Android, and Web
+- **Simple API:** Easy to use and well-documented
+- **No native dependencies:** Pure JavaScript implementation
+- **Stable:** Battle-tested in production apps
+- **Expo compatible:** Works seamlessly with Expo managed workflow
+
+**Note:** For high-performance scenarios, consider MMKV, but AsyncStorage is sufficient for most use cases and more reliable across different build configurations.
+
+**Implementation Pattern:**
+
+// src/utils/storage.ts
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const STORAGE_KEYS = {
+  CITIES: 'cities',
+  CURRENT_CITY: 'current_city',
+} as const;
+
+export const appStorage = {
+  saveCities: async (cities: City[]): Promise<void> => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.CITIES, JSON.stringify(cities));
+    } catch (error) {
+      console.error('Ошибка сохранения городов:', error);
+    }
+  },
+
+  loadCities: async (): Promise<City[]> => {
+    try {
+      const citiesJson = await AsyncStorage.getItem(STORAGE_KEYS.CITIES);
+      if (!citiesJson) return [];
+      return JSON.parse(citiesJson) as City[];
+    } catch (error) {
+      console.error('Ошибка загрузки городов:', error);
+      return [];
+    }
+  },
+};
+
+**Usage in Zustand Store:**
+
+// Initialize store from storage on app start (async)
+initializeStore: async () => {
+  const savedCities = await appStorage.loadCities();
+  const savedCurrentCity = await appStorage.loadCurrentCity();
+  set({ cities: savedCities, currentCity: savedCurrentCity, initialized: true });
+},
+
+// Save to storage whenever state changes (async)
+addCity: async (city: City) => {
+  const newCities = [...state.cities, city];
+  set({ cities: newCities });
+  await appStorage.saveCities(newCities); // Persist asynchronously
+},
+
+**Key Points:**
+- Always wrap storage operations in try/catch
+- Use constants for storage keys (avoid typos)
+- Store complex objects as JSON strings
+- Initialize store data in root layout useEffect
+- **All AsyncStorage operations are asynchronous** - always use await
+- Use `multiRemove` for deleting multiple keys efficiently
+- Handle errors gracefully - storage failures shouldn't crash the app
+
+**Storage Keys Convention:**
+Use SCREAMING_SNAKE_CASE for storage keys and define them as constants:
+const STORAGE_KEYS = {
+  CITIES: 'cities',
+  CURRENT_CITY: 'current_city',
+} as const;
+
+
+
+---
+
+## Gesture Handling (Swipe to Delete)
+
+import { Swipeable } from 'react-native-gesture-handler';
+
+const SwipeableCityItem = ({ city, onDelete }) => {
+const renderRightActions = () => (
+<TouchableOpacity
+onPress={() => onDelete(city.id)}
+style={styles.deleteButton}
+>
+<Text style={styles.deleteText}>Удалить</Text>
+</TouchableOpacity>
+);
+
+return (
+<Swipeable renderRightActions={renderRightActions} overshootRight={false} friction={2} >
+<View style={styles.cityItem}>
+{/* City content */}
+</View>
+</Swipeable>
+);
+};
+
+
+
+---
+
+## Performance Best Practices
+
+### Lists
+- Use `FlatList` with `keyExtractor` and `getItemLayout`
+- Implement `React.memo()` for list items
+- Avoid anonymous functions in renderItem
+
+// ✅ Good
+const renderItem = useCallback(({ item }) => (
+<CityItem city={item} onPress={handlePress} />
+), [handlePress]);
+
+<FlatList
+data={cities}
+renderItem={renderItem}
+keyExtractor={(item) => item.id}
+/>
+
+
+
+### Images
+- Use optimized image formats (WebP)
+- Implement lazy loading for images
+- Cache network images with `expo-image`
+
+---
+
+## Testing Strategy
+
+### Unit Tests
+- Test custom hooks with `@testing-library/react-hooks`
+- Test utility functions with Jest
+- Test Zustand stores in isolation
+
+### Component Tests
+- Use `@testing-library/react-native`
+- Test user interactions (press, swipe)
+- Mock API calls and navigation
+
+---
+
+## Environment Variables
+
+Open-Meteo API doesn't require API keys. No environment variables needed for weather data.
+
+**Optional (for other services):**
+.env (if you add other APIs later)
+EXPO_PUBLIC_GEOCODING_CACHE_TTL=3600000 # 1 hour in milliseconds
+
+**Note:** All API calls to Open-Meteo are made without authentication.;
+
+---
+
+## Git Commit Conventions
+
+**Format:** `<type>(<scope>): <subject>`
+
+**Types:**
+- `feat` - new feature
+- `fix` - bug fix
+- `refactor` - code refactoring
+- `style` - formatting, no code change
+- `docs` - documentation only
+- `test` - adding tests
+- `chore` - maintenance tasks
+
+**Examples:**
+feat(weather): add hourly forecast component
+fix(geolocation): handle permission denied error
+refactor(store): optimize weather data structure
+
+
+
+---
+
+## Common Patterns
+
+### Custom Hook Pattern
+export const useWeather = (latitude: number, longitude: number) => {
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const fetchWeather = async () => {
+      setLoading(true);
+      try {
+        const data = await weatherAPI.getWeatherForecast(latitude, longitude);
+        setWeather(data);
+      } catch (err) {
+        setError(err as Error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWeather();
+  }, [latitude, longitude]);
+
+  return { weather, loading, error };
+};
+
+
+
+### Error Boundary
+Wrap app with error boundary for production crash handling.
+
+---
+
+## AI Assistant Instructions
+
+When generating code for this project:
+
+1. **Always use TypeScript** with proper types
+2. **Follow React Native best practices** - functional components, hooks
+3. **Use existing libraries** from tech stack (don't invent new ones)
+4. **Match project structure** - place files in correct directories
+5. **Include error handling** - try/catch for async operations
+6. **Add comments** for complex logic only
+7. **Consider performance** - memoization, list optimization
+8. **Mobile-first mindset** - touch targets, gestures, responsive design
+9. **Suggest testing approaches** when implementing new features
+10. **Reference Expo/React Native docs** for native features
+
+---
+
+## Resources
+
+- [Expo Documentation](https://docs.expo.dev/)
+- [React Native Documentation](https://reactnative.dev/)
+- [React Navigation Docs](https://reactnavigation.org/)
+- [Zustand Documentation](https://docs.pmnd.rs/zustand)
+- [AsyncStorage Documentation](https://react-native-async-storage.github.io/async-storage/)
+- [Open-Meteo API Documentation](https://open-meteo.com/en/docs)
+- [Open-Meteo Geocoding API](https://open-meteo.com/en/docs/geocoding-api)
+- [React Native Gesture Handler](https://docs.swmansion.com/react-native-gesture-handler/)
+
+---
+
+## Notes
+
+- **Platform-specific code:** Use `Platform.OS === 'ios'` when needed
+- **Animations:** Prefer `react-native-reanimated` over Animated API
+- **Navigation types:** Define RootStackParamList in types/navigation.ts
+- **Local Storage:** Use AsyncStorage for local data persistence (see Storage section below)
+- **API caching:** Open-Meteo updates hourly - implement 30-minute cache to optimize performance
+- **No rate limits:** Open-Meteo has no strict rate limits for non-commercial use, but respect fair usage
+
+---
+
+*Last updated: December 3, 2025*
