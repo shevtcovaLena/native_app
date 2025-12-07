@@ -52,6 +52,8 @@ export interface City {
   longitude: number;
   country?: string;
   timezone?: string;
+  countryCode?: string;
+  region?: string;
 }
 
 

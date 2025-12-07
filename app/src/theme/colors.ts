@@ -30,6 +30,8 @@ export const LightThemeColors = {
   accent: Palette.blue[400],
   /** Цвет ошибки / предупреждений */
   error: Palette.orange[400],
+  /** Цвет границ карточек и разделителей */
+  border: "#e5e7eb"
 } as const;
 
 export const DarkThemeColors = {
@@ -39,6 +41,7 @@ export const DarkThemeColors = {
   surface: "#020617",
   accent: Palette.blue[400],
   error: Palette.orange[400],
+  border: "#1e293b",
 } as const;
 
 export type AppTheme = {

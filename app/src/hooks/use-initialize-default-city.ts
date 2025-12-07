@@ -14,24 +14,49 @@ const DEFAULT_CITY: City = {
 };
 
 /**
- * Инициализация списка городов: пытаемся получить текущую локацию,
- * иначе добавляем дефолтный город. Всегда ставит текущую локацию первой.
+ * Инициализация списка городов: загружает сохраненные города из памяти,
+ * если их нет - пытается получить текущую локацию или добавляет дефолтный город
  */
 export const useInitializeDefaultCity = (): { initializing: boolean } => {
-  const [initializing, setInitializing] = useState(false);
+  const [initializing, setInitializing] = useState(true);
 
   const cities = useWeatherStore((state) => state.cities);
+  const initialized = useWeatherStore((state) => state.initialized);
+  const initializeStore = useWeatherStore((state) => state.initializeStore);
   const addCity = useWeatherStore((state) => state.addCity);
   const setCurrentCity = useWeatherStore((state) => state.setCurrentCity);
   const fetchWeather = useWeatherStore((state) => state.fetchWeather);
 
   useEffect(() => {
-    if (cities.length > 0) {
+    // Если уже инициализировали - выходим
+    if (initialized) {
+      setInitializing(false);
       return;
     }
 
     const run = async () => {
+      console.log('🔄 Начало инициализации приложения');
       setInitializing(true);
+
+      // ШАГ 1: Загружаем сохраненные данные из AsyncStorage
+      await initializeStore();
+      
+      // ШАГ 2: Проверяем что загрузилось
+      const currentCities = useWeatherStore.getState().cities;
+      const currentCity = useWeatherStore.getState().currentCity;
+      
+      console.log('📦 Загружено городов из памяти:', currentCities.length);
+
+      // ШАГ 3: Если есть сохраненные города - загружаем погоду для текущего
+      if (currentCities.length > 0 && currentCity) {
+        console.log('✅ Используем сохраненные города');
+        await fetchWeather(currentCity.latitude, currentCity.longitude);
+        setInitializing(false);
+        return;
+      }
+
+      // ШАГ 4: Если нет сохраненных - добавляем первый город
+      console.log('🆕 Нет сохраненных городов, добавляем первый');
       let city: City = DEFAULT_CITY;
 
       try {
@@ -58,21 +83,23 @@ export const useInitializeDefaultCity = (): { initializing: boolean } => {
             country: geocode[0]?.country ?? undefined,
             timezone: geocode[0]?.timezone ?? undefined,
           };
+          
+          console.log('📍 Получена геолокация:', cityName);
         }
       } catch (error) {
-        console.warn("Не удалось получить геолокацию, используем дефолтный город", error);
+        console.warn("⚠️ Не удалось получить геолокацию, используем дефолтный город", error);
       }
 
       await addCity(city);
       await setCurrentCity(city);
       await fetchWeather(city.latitude, city.longitude);
       setInitializing(false);
+      
+      console.log('✅ Инициализация завершена');
     };
 
     void run();
-  }, [cities.length, addCity, fetchWeather, setCurrentCity]);
+  }, [initialized]); // ← Зависимость только от initialized
 
   return { initializing };
 };
-
-
