@@ -5,6 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 import { DarkThemeColors, LightThemeColors } from '@/src/theme/colors';
 import { useInitializeDefaultCity } from '@/src/hooks/use-initialize-default-city';
+import { useNotifications } from '@/src/hooks/use-notifications';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -12,6 +13,7 @@ export default function TabLayout() {
   const colors = isDark ? DarkThemeColors : LightThemeColors;
 
   useInitializeDefaultCity();
+  useNotifications();
 
   return (
     <Tabs
