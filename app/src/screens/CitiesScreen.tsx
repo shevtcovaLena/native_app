@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRouter } from 'expo-router';
 import { View, StyleSheet, FlatList, Alert, useColorScheme } from 'react-native';
 import { useWeatherStore } from '@/src/store/weatherStore';
 import type { City } from '@/src/types/weather';
@@ -12,6 +13,7 @@ import { CitySearch } from '../components/list/CitySearch';
 export const CitiesScreen: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = colorScheme === 'dark' ? DarkThemeColors : LightThemeColors;
+  const router = useRouter();
   
   const [isSearching, setIsSearching] = useState(false); // ← Добавить состояние
 
@@ -19,11 +21,10 @@ export const CitiesScreen: React.FC = () => {
   const currentCity = useWeatherStore((state) => state.currentCity);
   const removeCity = useWeatherStore((state) => state.removeCity);
   const setCurrentCity = useWeatherStore((state) => state.setCurrentCity);
-  const fetchWeather = useWeatherStore((state) => state.fetchWeather);
 
   const handleCityPress = async (city: City) => {
     await setCurrentCity(city);
-    await fetchWeather(city.latitude, city.longitude);
+    router.push('/(tabs)')
   };
 
   const handleDeleteCity = (cityId: string, cityName: string) => {
@@ -37,13 +38,6 @@ export const CitiesScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             await removeCity(cityId);
-            if (currentCity?.id === cityId && cities.length > 1) {
-              const newCurrentCity = cities.find((c) => c.id !== cityId);
-              if (newCurrentCity) {
-                await setCurrentCity(newCurrentCity);
-                await fetchWeather(newCurrentCity.latitude, newCurrentCity.longitude);
-              }
-            }
           },
         },
       ]

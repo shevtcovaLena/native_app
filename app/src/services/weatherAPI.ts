@@ -6,7 +6,11 @@ import { getWeatherCondition } from '@/src/utils/weatherCodeMapper';
 const BASE_URL = 'https://api.open-meteo.com/v1';
 
 export const weatherAPI = {
-  async getWeatherForecast(latitude: number, longitude: number): Promise<WeatherData> {
+  async getWeatherForecast(
+    latitude: number,
+    longitude: number,
+    signal?: AbortSignal
+  ): Promise<WeatherData> {
     try {
       const params = {
         latitude,
@@ -18,7 +22,7 @@ export const weatherAPI = {
         forecast_days: 7,
       };
 
-      const response = await axios.get(`${BASE_URL}/forecast`, { params });
+      const response = await axios.get(`${BASE_URL}/forecast`, { params, signal });
       const data = response.data;
 
       const currentCode = data.current.weather_code as number;
@@ -60,8 +64,18 @@ export const weatherAPI = {
       };
 
       return weatherData;
-    } catch (error) {
+    } catch (error: unknown) {
+      // Игнорируем AbortError - это нормальная отмена запроса
+      if (isAxiosError(error) && (error.name === 'AbortError' || error.name === 'CanceledError')) {
+        throw error; // Пробрасываем дальше, чтобы TanStack Query мог обработать
+      }
+
       if (isAxiosError(error)) {
+        // Проверяем, не был ли запрос отменен через signal
+        if (error.code === 'ERR_CANCELED' || (error.message && error.message.includes('canceled'))) {
+          throw error;
+        }
+
         const status = error.response?.status;
 
         if (status === 400) {
@@ -79,6 +93,10 @@ export const weatherAPI = {
       }
 
       if (error instanceof Error) {
+        // Проверяем, не был ли запрос отменен
+        if (error.name === 'AbortError' || error.message.includes('canceled')) {
+          throw error;
+        }
         console.error('Network error:', error.message);
         throw new Error('Ошибка сети. Проверьте подключение к интернету.');
       }

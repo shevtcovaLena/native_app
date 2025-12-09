@@ -25,7 +25,6 @@ export const useInitializeDefaultCity = (): { initializing: boolean } => {
   const initializeStore = useWeatherStore((state) => state.initializeStore);
   const addCity = useWeatherStore((state) => state.addCity);
   const setCurrentCity = useWeatherStore((state) => state.setCurrentCity);
-  const fetchWeather = useWeatherStore((state) => state.fetchWeather);
 
   useEffect(() => {
     // Если уже инициализировали - выходим
@@ -47,10 +46,10 @@ export const useInitializeDefaultCity = (): { initializing: boolean } => {
       
       console.log('📦 Загружено городов из памяти:', currentCities.length);
 
-      // ШАГ 3: Если есть сохраненные города - загружаем погоду для текущего
+      // ШАГ 3: Если есть сохраненные города - используем их
       if (currentCities.length > 0 && currentCity) {
         console.log('✅ Используем сохраненные города');
-        await fetchWeather(currentCity.latitude, currentCity.longitude);
+        // Погода загрузится автоматически через useWeatherQuery в HomeScreen
         setInitializing(false);
         return;
       }
@@ -92,7 +91,7 @@ export const useInitializeDefaultCity = (): { initializing: boolean } => {
 
       await addCity(city);
       await setCurrentCity(city);
-      await fetchWeather(city.latitude, city.longitude);
+      // Погода загрузится автоматически через useWeatherQuery в HomeScreen
       setInitializing(false);
       
       console.log('✅ Инициализация завершена');

@@ -1,15 +1,11 @@
 import { create } from 'zustand';
 
-import type { City, WeatherData } from '@/src/types/weather';
-import { weatherAPI } from '@/src/services/weatherAPI';
+import type { City } from '@/src/types/weather';
 import { appStorage } from '@/src/utils/storage';
 
 interface WeatherStoreState {
   cities: City[];
   currentCity: City | null;
-  currentWeather: WeatherData | null;
-  loading: boolean;
-  error: string | null;
   initialized: boolean;
 }
 
@@ -17,8 +13,8 @@ interface WeatherStoreActions {
   addCity: (city: City) => Promise<void>;
   removeCity: (cityId: string) => Promise<void>;
   setCurrentCity: (city: City | null) => Promise<void>;
-  fetchWeather: (latitude: number, longitude: number) => Promise<void>;
   initializeStore: () => Promise<void>;
+  updateCurrentLocation: (city: City) => Promise<void>;
 }
 
 type WeatherStore = WeatherStoreState & WeatherStoreActions;
@@ -46,9 +42,6 @@ const orderCities = (cities: City[]): City[] => {
 export const useWeatherStore = create<WeatherStore>((set, get) => ({
   cities: [],
   currentCity: null,
-  currentWeather: null,
-  loading: false,
-  error: null,
   initialized: false,
 
   addCity: async (city: City) => {
@@ -86,16 +79,30 @@ export const useWeatherStore = create<WeatherStore>((set, get) => ({
     await appStorage.saveCurrentCity(city);
   },
 
-  fetchWeather: async (latitude: number, longitude: number) => {
-    set({ loading: true, error: null });
-
-    try {
-      const data = await weatherAPI.getWeatherForecast(latitude, longitude);
-      set({ currentWeather: data, loading: false });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Не удалось загрузить данные о погоде';
-      set({ error: message, loading: false });
+  updateCurrentLocation: async (city: City) => {
+    const state = get();
+    // Обновляем или добавляем текущее местоположение
+    const existingIndex = state.cities.findIndex((c) => c.id === 'current-location');
+    let newCities: City[];
+    
+    if (existingIndex >= 0) {
+      // Обновляем существующее местоположение
+      newCities = [...state.cities];
+      newCities[existingIndex] = city;
+    } else {
+      // Добавляем новое местоположение
+      newCities = orderCities([...state.cities, city]);
     }
+    
+    set({ cities: newCities });
+    
+    // Если текущий город - это текущее местоположение, обновляем его
+    if (state.currentCity?.id === 'current-location') {
+      set({ currentCity: city });
+      await appStorage.saveCurrentCity(city);
+    }
+    
+    await appStorage.saveCities(newCities);
   },
 
   initializeStore: async () => {

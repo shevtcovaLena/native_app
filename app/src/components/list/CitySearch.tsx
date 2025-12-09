@@ -31,7 +31,6 @@ export const CitySearch: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const addCity = useWeatherStore((state) => state.addCity);
   const setCurrentCity = useWeatherStore((state) => state.setCurrentCity);
-  const fetchWeather = useWeatherStore((state) => state.fetchWeather);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -96,7 +95,7 @@ export const CitySearch: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     try {
       await addCity(city);
       await setCurrentCity(city);
-      await fetchWeather(city.latitude, city.longitude);
+      // Погода загрузится автоматически через useWeatherQuery в HomeScreen
     } catch (error) {
       console.error('Ошибка добавления города:', error);
     }

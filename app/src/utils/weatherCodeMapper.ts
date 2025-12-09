@@ -63,9 +63,27 @@ export const getWeatherLabel = (
 };
 
 /**
- * Получить анимацию погоды
+ * Получить анимацию погоды с учетом времени суток
+ * @param condition - погодное условие
+ * @param isDaytime - true если день, false если ночь
  */
-export const getWeatherAnimation = (condition: WeatherCondition): string => {
+export const getWeatherAnimation = (
+  condition: WeatherCondition,
+  isDaytime: boolean = true
+): string => {
+  // Для Clear и Cloudy есть ночные версии
+  if (!isDaytime) {
+    if (condition === WeatherCondition.Clear) {
+      return require("@/src/assets/animation/Weather-night.json");
+    }
+    if (condition === WeatherCondition.PartlyCloudy) {
+      return require("@/src/assets/animation/Weather-cloudy(night).json");
+    }
+    if (condition === WeatherCondition.Rain || condition === WeatherCondition.Drizzle) {
+      return require("@/src/assets/animation/Weather-rainy(night).json");
+    }
+  }
+  
   const animationMap = {
     [WeatherCondition.Clear]: require("@/src/assets/animation/Weather-sunny.json"),
     [WeatherCondition.PartlyCloudy]: require("@/src/assets/animation/Weather-partly-cloudy.json"),
