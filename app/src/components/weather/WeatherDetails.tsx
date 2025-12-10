@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import type { CurrentWeather } from '@/src/types/weather';
+import { getCardBackgroundColor, getCardItemBackgroundColor } from '@/src/utils/cardColors';
 
 type MaterialIconName = keyof typeof MaterialIcons.glyphMap;
 
@@ -20,11 +21,11 @@ export const WeatherDetails: React.FC<WeatherDetailsProps> = ({
   backgroundColor,
   isDarkTheme = false,
 }) => {
-  const details: Array<{
+  const details: {
     label: string;
     value: string;
     icon: MaterialIconName;
-  }> = [
+  }[] = [
     {
       label: 'Влажность',
       value: `${current.humidity}%`,
@@ -42,7 +43,7 @@ export const WeatherDetails: React.FC<WeatherDetailsProps> = ({
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
+    <View style={[styles.container, { backgroundColor: getCardBackgroundColor(backgroundColor) }]}>
       <Text style={[styles.title, { color: textColor }]}>Детали</Text>
       <View style={styles.grid}>
         {details.map((detail, index) => (
@@ -51,9 +52,7 @@ export const WeatherDetails: React.FC<WeatherDetailsProps> = ({
             style={[
               styles.detailItem,
               {
-                backgroundColor: isDarkTheme
-                  ? 'rgba(255, 255, 255, 0.1)'
-                  : 'rgba(0, 0, 0, 0.05)',
+                backgroundColor: getCardItemBackgroundColor(isDarkTheme),
               },
             ]}
           >
@@ -102,6 +101,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
+    justifyContent: 'space-between'
   },
   detailHeader: {
     flexDirection: 'row',
@@ -113,6 +113,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    flexShrink: 1,
   },
   detailValue: {
     fontSize: 20,

@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import type { HourlyForecastItem } from '@/src/types/weather';
 import { formatHourlyTime, isToday } from '@/src/utils/forecastUtils';
 import { getWeatherCondition } from '@/src/utils/weatherCodeMapper';
+import { getCardBackgroundColor } from '@/src/utils/cardColors';
 
 interface HourlyForecastProps {
   hourly: HourlyForecastItem[];
@@ -27,7 +28,7 @@ export const HourlyForecast: React.FC<HourlyForecastProps> = ({
   }
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
+    <View style={[styles.container, { backgroundColor: getCardBackgroundColor(backgroundColor) }]}>
       <Text style={[styles.title, { color: textColor }]}>Почасовой прогноз</Text>
       <ScrollView
         horizontal

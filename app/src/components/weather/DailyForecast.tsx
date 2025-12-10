@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import type { DailyForecastItem } from '@/src/types/weather';
 import { formatDailyDate } from '@/src/utils/forecastUtils';
 import { getWeatherIcon } from '@/src/utils/weatherCodeMapper';
+import { getCardBackgroundColor } from '@/src/utils/cardColors';
 
 interface DailyForecastProps {
   daily: DailyForecastItem[];
@@ -25,7 +26,7 @@ export const DailyForecast: React.FC<DailyForecastProps> = ({
   }
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
+    <View style={[styles.container, { backgroundColor: getCardBackgroundColor(backgroundColor) }]}>
       <Text style={[styles.title, { color: textColor }]}>Прогноз на 7 дней</Text>
       {daily.map((item, index) => {
         const date = formatDailyDate(item.date, timezone);

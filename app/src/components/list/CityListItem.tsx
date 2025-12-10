@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { DarkThemeColors, LightThemeColors } from "@/src/theme/colors";
+import { getCardBackgroundColor, getCardItemBackgroundColor } from "@/src/utils/cardColors";
 
 import type { City } from "@/src/types/weather";
 
@@ -17,6 +18,8 @@ interface CityListItemProps {
   isCurrentLocation: boolean;
   onPress: (city: City) => void;
   onDelete: (cityId: string, cityName: string) => void;
+  backgroundColor?: string;
+  isDarkTheme?: boolean;
 }
 
 export const CityListItem: React.FC<CityListItemProps> = ({
@@ -25,16 +28,28 @@ export const CityListItem: React.FC<CityListItemProps> = ({
   isCurrentLocation,
   onPress,
   onDelete,
+  backgroundColor,
+  isDarkTheme,
 }) => {
   const colorScheme = useColorScheme();
   const colors = colorScheme === "dark" ? DarkThemeColors : LightThemeColors;
+  
+  // Используем переданный backgroundColor или fallback на colors.surface
+  const cardBg = backgroundColor 
+    ? getCardBackgroundColor(backgroundColor)
+    : colors.surface;
+  
+  // Для выбранного элемента используем акцентный цвет, иначе цвет карточки
+  const itemBg = isSelected 
+    ? colors.accent + "20" 
+    : cardBg;
 
   return (
     <TouchableOpacity
       style={[
         styles.container,
         {
-          backgroundColor: isSelected ? colors.accent + "20" : colors.surface,
+          backgroundColor: itemBg,
           borderColor: isSelected ? colors.accent : "transparent",
         },
       ]}

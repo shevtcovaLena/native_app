@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { MaterialIcons } from "@expo/vector-icons";
 
 import { useWeatherStore } from "@/src/store/weatherStore";
 import { LottieLoader } from "@/src/components/weather/LottieLoader";
@@ -100,9 +101,57 @@ export const HomeScreen: React.FC = () => {
   const gradientEnd =
     isSnow && isDay && !isDarkTheme ? { x: 0, y: 1 } : { x: 1, y: 1 };
 
-  // Отслеживание скролла для sticky названия города
+  // Отслеживание скролла для sticky названия города и стрелочки
   const scrollY = useRef(new Animated.Value(0)).current;
   const [showStickyCity, setShowStickyCity] = useState(false);
+  const [showScrollHint, setShowScrollHint] = useState(true);
+
+  // Анимация стрелочки
+  const arrowOpacity = useRef(new Animated.Value(0.6)).current;
+  const arrowTranslateY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Анимация стрелочки вверх-вниз
+    const bounceAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(arrowTranslateY, {
+            toValue: 8,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(arrowOpacity, {
+            toValue: 0.3,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(arrowTranslateY, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(arrowOpacity, {
+            toValue: 0.6,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ]),
+      ])
+    );
+
+    if (showScrollHint) {
+      bounceAnimation.start();
+    } else {
+      bounceAnimation.stop();
+      arrowOpacity.setValue(0);
+      arrowTranslateY.setValue(0);
+    }
+
+    return () => bounceAnimation.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showScrollHint]);
 
   // Цвет для sticky названия города (полупрозрачный фон поверх градиента)
   const stickyHeaderBg =  weatherColors?.gradientStart || colors.background;
@@ -117,6 +166,8 @@ export const HomeScreen: React.FC = () => {
         // Показываем sticky название когда скроллим вниз от начала основного блока
         // Примерно когда скролл больше 100px
         setShowStickyCity(offsetY > 100);
+        // Скрываем стрелочку при скролле
+        setShowScrollHint(offsetY < 50);
       },
     }
   );
@@ -206,6 +257,25 @@ export const HomeScreen: React.FC = () => {
                 Влажность: {currentWeather.current.humidity}%, Ветер:{" "}
                 {Math.round(currentWeather.current.windSpeed)} м/с
               </Text>
+
+              {/* Стрелочка-подсказка */}
+              {showScrollHint && (
+                <Animated.View
+                  style={[
+                    styles.scrollHint,
+                    {
+                      opacity: arrowOpacity,
+                      transform: [{ translateY: arrowTranslateY }],
+                    },
+                  ]}
+                >
+                  <MaterialIcons
+                    name="keyboard-arrow-down"
+                    size={32}
+                    color={textColor}
+                  />
+                </Animated.View>
+              )}
             </View>
 
             {/* Детальная информация о погоде */}
@@ -215,7 +285,7 @@ export const HomeScreen: React.FC = () => {
                 timezone={currentWeather.timezone}
                 textColor={textColor}
                 subtitleColor={subtitleColor}
-                backgroundColor={backgroundColor + "80"}
+                backgroundColor={backgroundColor}
               />
 
               <DailyForecast
@@ -223,14 +293,14 @@ export const HomeScreen: React.FC = () => {
                 timezone={currentWeather.timezone}
                 textColor={textColor}
                 subtitleColor={subtitleColor}
-                backgroundColor={backgroundColor + "80"}
+                backgroundColor={backgroundColor}
               />
 
               <WeatherDetails
                 current={currentWeather.current}
                 textColor={textColor}
                 subtitleColor={subtitleColor}
-                backgroundColor={backgroundColor + "80"}
+                backgroundColor={backgroundColor}
                 isDarkTheme={isDarkTheme}
               />
             </View>
@@ -316,5 +386,9 @@ const styles = StyleSheet.create({
   },
   detailsSection: {
     paddingTop: 16,
+  },
+  scrollHint: {
+    marginTop: 24,
+    alignItems: 'center',
   },
 });
