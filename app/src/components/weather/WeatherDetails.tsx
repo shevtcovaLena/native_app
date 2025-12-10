@@ -1,6 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import type { CurrentWeather } from '@/src/types/weather';
+
+type MaterialIconName = keyof typeof MaterialIcons.glyphMap;
 
 interface WeatherDetailsProps {
   current: CurrentWeather;
@@ -17,16 +20,20 @@ export const WeatherDetails: React.FC<WeatherDetailsProps> = ({
   backgroundColor,
   isDarkTheme = false,
 }) => {
-  const details = [
+  const details: Array<{
+    label: string;
+    value: string;
+    icon: MaterialIconName;
+  }> = [
     {
       label: 'Влажность',
       value: `${current.humidity}%`,
-      // TODO: добавить иконку влажности
+      icon: 'opacity',
     },
     {
       label: 'Скорость ветра',
       value: `${Math.round(current.windSpeed)} м/с`,
-      // TODO: добавить иконку ветра
+      icon: 'air',
     },
     // TODO: добавить ощущаемую температуру (feels_like), если будет доступна в API
     // TODO: добавить давление (pressure), если будет доступно в API
@@ -50,9 +57,16 @@ export const WeatherDetails: React.FC<WeatherDetailsProps> = ({
               },
             ]}
           >
-            <Text style={[styles.detailLabel, { color: subtitleColor }]}>
-              {detail.label}
-            </Text>
+            <View style={styles.detailHeader}>
+              <MaterialIcons
+                name={detail.icon}
+                size={20}
+                color={subtitleColor}
+              />
+              <Text style={[styles.detailLabel, { color: subtitleColor }]}>
+                {detail.label}
+              </Text>
+            </View>
             <Text style={[styles.detailValue, { color: textColor }]}>
               {detail.value}
             </Text>
@@ -89,9 +103,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 12,
   },
+  detailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
   detailLabel: {
     fontSize: 12,
-    marginBottom: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

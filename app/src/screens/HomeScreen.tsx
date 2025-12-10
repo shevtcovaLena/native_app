@@ -1,6 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   StyleSheet,
   Text,
   View,
@@ -29,6 +28,8 @@ import { useCurrentTime } from "../hooks/useCurrentTime";
 import { HourlyForecast } from "../components/weather/HourlyForecast";
 import { DailyForecast } from "../components/weather/DailyForecast";
 import { WeatherDetails } from "../components/weather/WeatherDetails";
+import { LoadingState } from "../components/ui/LoadingState";
+import { ErrorState } from "../components/ui/ErrorState";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -163,18 +164,11 @@ export const HomeScreen: React.FC = () => {
         scrollEventThrottle={16}
       >
         {isLoading && (
-          <View style={[styles.loadingContainer, { minHeight: SCREEN_HEIGHT }]}>
-            <ActivityIndicator size="large" color={colors.accent} />
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-              Загрузка погоды...
-            </Text>
-          </View>
+          <LoadingState message="Загрузка погоды..." minHeight={SCREEN_HEIGHT} />
         )}
 
         {error && !isLoading && (
-          <View style={[styles.errorContainer, { minHeight: SCREEN_HEIGHT }]}>
-            <Text style={[styles.error, { color: colors.error }]}>{error}</Text>
-          </View>
+          <ErrorState message={error} minHeight={SCREEN_HEIGHT} />
         )}
 
         {!isLoading && !error && currentWeather && animationSource && (
@@ -255,9 +249,7 @@ export const HomeScreen: React.FC = () => {
             <Text style={[styles.currentDate, { color: colors.textSecondary }]}>
               {formattedDate}
             </Text>
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-              Загрузка погоды...
-            </Text>
+            <LoadingState message="Загрузка погоды..." />
           </View>
         )}
       </Animated.ScrollView>
@@ -296,19 +288,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
   },
-  loadingContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  errorContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 16,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-  },
   currentTime: {
     fontSize: 56,
     fontWeight: "200",
@@ -334,11 +313,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     marginVertical: 2,
-  },
-  error: {
-    fontSize: 16,
-    textAlign: "center",
-    paddingHorizontal: 24,
   },
   detailsSection: {
     paddingTop: 16,

@@ -1,4 +1,5 @@
 // src/utils/weatherCodeMapper.ts
+import { MaterialIcons } from "@expo/vector-icons";
 import { WeatherCondition } from "@/src/types/weather";
 
 /**
@@ -100,3 +101,24 @@ export const getWeatherAnimation = (
 };
 
 export type AnimationType = ReturnType<typeof getWeatherAnimation>;
+
+/**
+ * Получить иконку погоды по условию
+ * @param condition - погодное условие
+ * @returns название иконки из MaterialIcons
+ */
+export const getWeatherIcon = (condition: WeatherCondition): keyof typeof MaterialIcons.glyphMap => {
+  const iconMap: Record<WeatherCondition, keyof typeof MaterialIcons.glyphMap> = {
+    [WeatherCondition.Clear]: 'wb-sunny',
+    [WeatherCondition.PartlyCloudy]: 'wb-cloudy',
+    [WeatherCondition.Cloudy]: 'cloud',
+    [WeatherCondition.Fog]: 'blur-on',
+    [WeatherCondition.Drizzle]: 'grain',
+    [WeatherCondition.Rain]: 'grain',
+    [WeatherCondition.Snow]: 'ac-unit',
+    [WeatherCondition.Showers]: 'grain',
+    [WeatherCondition.Thunderstorm]: 'thunderstorm',
+  };
+
+  return iconMap[condition] || 'wb-cloudy';
+};

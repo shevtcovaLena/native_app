@@ -6,7 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   Text,
-  ActivityIndicator,
   useColorScheme,
   Keyboard,
 } from "react-native";
@@ -15,6 +14,9 @@ import { geocodingAPI } from "@/src/services/geocodingAPI";
 import { useWeatherStore } from "@/src/store/weatherStore";
 import type { City } from "@/src/types/weather";
 import { DarkThemeColors, LightThemeColors } from "@/src/theme/colors";
+import { LoadingState } from "@/src/components/ui/LoadingState";
+import { ErrorState } from "@/src/components/ui/ErrorState";
+import { EmptyState } from "@/src/components/ui/EmptyState";
 
 // Константа для debounce
 const SEARCH_DEBOUNCE_MS = 1000; // 1000ms - оптимальное значение
@@ -181,27 +183,9 @@ export const CitySearch: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       </View>
 
       {/* Результаты поиска */}
-      {loading && (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            Поиск городов...
-          </Text>
-        </View>
-      )}
+      {loading && <LoadingState message="Поиск городов..." />}
 
-      {error && !loading && (
-        <View style={styles.centerContainer}>
-          <MaterialIcons
-            name="error-outline"
-            size={48}
-            color={colors.textSecondary}
-          />
-          <Text style={[styles.errorText, { color: colors.textSecondary }]}>
-            {error}
-          </Text>
-        </View>
-      )}
+      {error && !loading && <ErrorState message={error} />}
 
       {!loading && !error && results.length > 0 && (
         <FlatList
@@ -215,16 +199,10 @@ export const CitySearch: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
       {/* Подсказка если ничего не ввели */}
       {!loading && !error && results.length === 0 && query.length === 0 && (
-        <View style={styles.centerContainer}>
-          <MaterialIcons
-            name="search"
-            size={64}
-            color={colors.textSecondary}
-          />
-          <Text style={[styles.hintText, { color: colors.textSecondary }]}>
-            Начните вводить название города
-          </Text>
-        </View>
+        <EmptyState
+          icon="search"
+          message="Начните вводить название города"
+        />
       )}
     </View>
   );
@@ -293,23 +271,5 @@ const styles = StyleSheet.create({
   },
   resultDetails: {
     fontSize: 14,
-  },
-  centerContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 48,
-  },
-  loadingText: {
-    fontSize: 14,
-    marginTop: 12,
-  },
-  errorText: {
-    fontSize: 16,
-    marginTop: 16,
-  },
-  hintText: {
-    fontSize: 16,
-    marginTop: 16,
-    textAlign: "center",
   },
 });

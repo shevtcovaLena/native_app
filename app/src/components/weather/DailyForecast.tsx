@@ -1,7 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import type { DailyForecastItem } from '@/src/types/weather';
 import { formatDailyDate } from '@/src/utils/forecastUtils';
+import { getWeatherIcon } from '@/src/utils/weatherCodeMapper';
 
 interface DailyForecastProps {
   daily: DailyForecastItem[];
@@ -39,12 +41,17 @@ export const DailyForecast: React.FC<DailyForecastProps> = ({
             ]}
           >
             <View style={styles.dayInfo}>
-              <Text style={[styles.dayDate, { color: textColor }]}>
-                {isToday ? 'Сегодня' : date}
-              </Text>
-              <Text style={[styles.dayCondition, { color: subtitleColor }]}>
-                {/* TODO: добавить иконку состояния погоды */}
-              </Text>
+              <View style={styles.dayHeader}>
+                <Text style={[styles.dayDate, { color: textColor }]}>
+                  {isToday ? 'Сегодня' : date}
+                </Text>
+                <MaterialIcons
+                  name={getWeatherIcon(item.condition)}
+                  size={20}
+                  color={subtitleColor}
+                  style={styles.weatherIcon}
+                />
+              </View>
             </View>
             <View style={styles.dayInfo}>
               {item.precipitationSum > 0 && (
@@ -93,14 +100,18 @@ const styles = StyleSheet.create({
   dayInfo: {
     flex: 1,
   },
+  dayHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   dayDate: {
     fontSize: 16,
     fontWeight: '500',
     textTransform: 'capitalize',
-    marginBottom: 4,
   },
-  dayCondition: {
-    fontSize: 14,
+  weatherIcon: {
+    marginTop: 2,
   },
   dayTemps: {
     flexDirection: 'row',
